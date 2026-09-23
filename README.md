@@ -1,4 +1,4 @@
-# RAWAN — Ruang Antisipasi Waspada Anak Nusantara
+# RAWAN (Ruang Antisipasi Waspada Anak Nusantara)
 
 [![React](https://img.shields.io/badge/React-18.3-blue.svg?logo=react&style=flat-square)](https://react.dev/)
 [![Three.js](https://img.shields.io/badge/Three.js-r165-black.svg?logo=three.js&style=flat-square)](https://threejs.org/)
