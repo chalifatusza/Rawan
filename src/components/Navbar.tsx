@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
 import { 
-  ShieldAlert, 
   Volume2, 
   VolumeX, 
   Settings, 
   MapPin, 
   PackageCheck, 
   Award, 
-  BookOpen, 
   Layers,
-  Sparkles
+  Menu,
+  X,
+  Home
 } from 'lucide-react';
 import { soundEngine } from '../audio/soundEngine';
 
@@ -19,7 +19,7 @@ interface NavbarProps {
   soundEnabled: boolean;
   onToggleSound: () => void;
   onOpenAccessibility: () => void;
-  userXp: number;
+  userXp?: number;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -28,17 +28,16 @@ export const Navbar: React.FC<NavbarProps> = ({
   soundEnabled,
   onToggleSound,
   onOpenAccessibility,
-  userXp
+  userXp = 0
 }) => {
-  const [volume, setVolume] = useState(0.5);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
-
-  const level = Math.floor(userXp / 100) + 1;
-  const xpCurrentLevel = userXp % 100;
+  const [volume, setVolume] = useState(0.5);
 
   const handleNav = (view: string) => {
     soundEngine.playClick();
     onNavigate(view);
+    setMobileMenuOpen(false);
   };
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -48,97 +47,75 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-40 px-4 md:px-8 py-3.5 flex items-center justify-between backdrop-blur-xl bg-slate-950/70 border-b border-cyan-950/60 shadow-2xl">
+    <header className="fixed top-0 left-0 right-0 z-40 px-4 md:px-6 py-2 h-14 flex items-center justify-between backdrop-blur-xl bg-black/95 border-b border-zinc-800">
       {/* Brand / Logo */}
       <div 
-        className="flex items-center gap-3 cursor-pointer group"
+        className="flex items-center gap-2.5 cursor-pointer group"
         onClick={() => handleNav('HOME')}
       >
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-600/20 border border-cyan-400/50 flex items-center justify-center shadow-[0_0_15px_rgba(6,182,212,0.3)] group-hover:scale-105 transition-transform">
-          <ShieldAlert className="w-6 h-6 text-cyan-400 group-hover:rotate-6 transition-transform" />
-        </div>
+        <img 
+          src="/logo_rawan.png" 
+          alt="Logo RAWAN" 
+          className="w-7 h-7 object-contain group-hover:scale-105 transition-transform" 
+        />
         <div>
-          <div className="flex items-center gap-1.5">
-            <span className="text-xl font-black tracking-wider text-white">DisasterVerse</span>
-            <span className="text-xs px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/40">3D</span>
+          <div className="flex items-center gap-1">
+            <span className="text-base sm:text-lg font-black tracking-tight text-white">RAWAN</span>
           </div>
-          <p className="text-[10px] text-slate-400 tracking-wide hidden sm:block">Platform Edukasi Kebencanaan Indonesia</p>
+          <p className="text-[9px] text-zinc-400 tracking-wide hidden sm:block leading-none">Ruang Antisipasi Waspada Anak Nusantara</p>
         </div>
       </div>
 
-      {/* Main Navigation Links */}
-      <nav className="hidden lg:flex items-center gap-1 bg-slate-900/60 p-1 rounded-xl border border-slate-800/80">
+      {/* Main Desktop Navigation Links (Centered mathematically on viewport) */}
+      <nav className="hidden lg:flex items-center gap-1 bg-zinc-950 p-0.5 rounded-lg border border-zinc-800 lg:absolute lg:left-1/2 lg:-translate-x-1/2">
         <button
           onClick={() => handleNav('HOME')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
-            currentView === 'HOME' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40' : 'text-slate-300 hover:text-white hover:bg-slate-800/50'
+          className={`px-3 py-1 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-all ${
+            currentView === 'HOME' ? 'bg-emerald-600 text-white shadow-sm' : 'text-zinc-300 hover:text-white hover:bg-zinc-800'
           }`}
         >
-          Beranda
+          <Home className="w-3.5 h-3.5" /> Beranda
         </button>
 
         <button
-          onClick={() => handleNav('MENU')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
-            currentView === 'MENU' || currentView === 'SIMULATION' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40' : 'text-slate-300 hover:text-white hover:bg-slate-800/50'
+          onClick={() => handleNav('MODULES')}
+          className={`px-3 py-1 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-all ${
+            currentView === 'MODULES' || currentView === 'SIMULATION' ? 'bg-emerald-600 text-white shadow-sm' : 'text-zinc-300 hover:text-white hover:bg-zinc-800'
           }`}
         >
-          <Layers className="w-3.5 h-3.5" /> Modul 3D
+          <Layers className="w-3.5 h-3.5" /> Modul Bencana
         </button>
 
         <button
           onClick={() => handleNav('MAP')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
-            currentView === 'MAP' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40' : 'text-slate-300 hover:text-white hover:bg-slate-800/50'
+          className={`px-3 py-1 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-all ${
+            currentView === 'MAP' ? 'bg-emerald-600 text-white shadow-sm' : 'text-zinc-300 hover:text-white hover:bg-zinc-800'
           }`}
         >
-          <MapPin className="w-3.5 h-3.5 text-amber-400" /> Peta Bencana
+          <MapPin className="w-3.5 h-3.5" /> Peta Bencana
         </button>
 
         <button
           onClick={() => handleNav('CHECKLIST')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
-            currentView === 'CHECKLIST' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40' : 'text-slate-300 hover:text-white hover:bg-slate-800/50'
+          className={`px-3 py-1 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-all ${
+            currentView === 'CHECKLIST' ? 'bg-emerald-600 text-white shadow-sm' : 'text-zinc-300 hover:text-white hover:bg-zinc-800'
           }`}
         >
-          <PackageCheck className="w-3.5 h-3.5 text-emerald-400" /> Tas Siaga
+          <PackageCheck className="w-3.5 h-3.5" /> Tas Siaga
         </button>
 
         <button
           onClick={() => handleNav('QUIZ')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
-            currentView === 'QUIZ' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40' : 'text-slate-300 hover:text-white hover:bg-slate-800/50'
+          className={`px-3 py-1 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-all ${
+            currentView === 'QUIZ' ? 'bg-emerald-600 text-white shadow-sm' : 'text-zinc-300 hover:text-white hover:bg-zinc-800'
           }`}
         >
-          <Award className="w-3.5 h-3.5 text-yellow-400" /> Kuis & Ujian
+          <Award className="w-3.5 h-3.5" /> Kuis & Ujian
         </button>
       </nav>
 
-      {/* Right Controls: User XP Badge, Sound & Accessibility */}
-      <div className="flex items-center gap-2.5">
-        {/* XP & Level Badge */}
-        <div 
-          onClick={() => handleNav('QUIZ')}
-          className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/80 border border-cyan-500/30 cursor-pointer hover:border-cyan-400 transition-colors"
-          title={`XP: ${userXp} | Kumpulkan XP dengan menyelesaikan simulasi dan kuis`}
-        >
-          <div className="w-6 h-6 rounded-lg bg-cyan-500/20 flex items-center justify-center text-cyan-400 font-bold text-xs">
-            {level}
-          </div>
-          <div className="flex flex-col">
-            <div className="flex items-center gap-1 text-[11px] font-bold text-cyan-200">
-              <Sparkles className="w-3 h-3 text-cyan-400" />
-              <span>{userXp} XP</span>
-            </div>
-            <div className="w-16 h-1 rounded-full bg-slate-800 overflow-hidden">
-              <div 
-                className="h-full bg-cyan-400 rounded-full transition-all duration-500" 
-                style={{ width: `${xpCurrentLevel}%` }}
-              />
-            </div>
-          </div>
-        </div>
-
+      {/* Right Controls: Sound, Accessibility & Mobile Menu Toggle */}
+      <div className="flex items-center gap-2">
         {/* Sound Toggle with Volume Popover */}
         <div className="relative">
           <button
@@ -147,23 +124,23 @@ export const Navbar: React.FC<NavbarProps> = ({
               onToggleSound();
             }}
             onMouseEnter={() => setShowVolumeSlider(true)}
-            className={`p-2.5 rounded-xl border backdrop-blur-md transition-all ${
+            className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-all ${
               soundEnabled
-                ? 'bg-cyan-950/40 border-cyan-500/40 text-cyan-400 hover:bg-cyan-900/50 shadow-[0_0_10px_rgba(6,182,212,0.2)]'
-                : 'bg-slate-900/60 border-slate-800 text-slate-500 hover:text-slate-400'
+                ? 'bg-emerald-600 border-emerald-500 text-white'
+                : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white'
             }`}
             title={soundEnabled ? "Nonaktifkan Suara" : "Aktifkan Suara"}
           >
-            {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+            {soundEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
           </button>
 
           {/* Mini Volume Slider on Hover */}
           {showVolumeSlider && soundEnabled && (
             <div 
               onMouseLeave={() => setShowVolumeSlider(false)}
-              className="absolute right-0 top-12 p-3 bg-slate-900/95 border border-cyan-500/30 rounded-xl shadow-2xl backdrop-blur-xl flex flex-col gap-1 w-32 animate-in fade-in"
+              className="absolute right-0 top-10 p-2.5 bg-zinc-900 border border-zinc-700 rounded-xl shadow-xl flex flex-col gap-1 w-32 animate-in fade-in z-50"
             >
-              <div className="flex justify-between text-[10px] text-slate-400 font-medium">
+              <div className="flex justify-between text-[10px] text-zinc-400 font-medium">
                 <span>Volume</span>
                 <span>{Math.round(volume * 100)}%</span>
               </div>
@@ -174,7 +151,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 step="0.05"
                 value={volume}
                 onChange={handleVolumeChange}
-                className="w-full accent-cyan-400 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+                className="w-full accent-emerald-500 cursor-pointer h-1.5 bg-zinc-800 rounded-lg"
               />
             </div>
           )}
@@ -186,21 +163,83 @@ export const Navbar: React.FC<NavbarProps> = ({
             soundEngine.playClick();
             onOpenAccessibility();
           }}
-          className="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800 text-slate-300 hover:text-cyan-400 hover:border-cyan-500/40 transition-all backdrop-blur-md"
+          className="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-800 transition-all flex items-center justify-center"
           title="Pengaturan Aksesibilitas"
         >
-          <Settings className="w-4 h-4" />
+          <Settings className="w-3.5 h-3.5" />
         </button>
 
-        {/* Mobile Menu Quick Toggle Button */}
+        {/* Mobile Hamburger Toggle Button */}
         <button
-          onClick={() => handleNav(currentView === 'MENU' ? 'HOME' : 'MENU')}
-          className="lg:hidden px-3 py-2 rounded-xl bg-cyan-600/90 text-white font-bold text-xs flex items-center gap-1.5"
+          onClick={() => {
+            soundEngine.playClick();
+            setMobileMenuOpen(!mobileMenuOpen);
+          }}
+          className="lg:hidden w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-800 text-white text-xs flex items-center justify-center transition-all"
+          aria-label="Toggle Menu"
         >
-          <BookOpen className="w-3.5 h-3.5" />
-          <span>Menu</span>
+          {mobileMenuOpen ? <X className="w-4 h-4 text-rose-400" /> : <Menu className="w-4 h-4 text-white" />}
         </button>
       </div>
+
+      {/* Mobile Backdrop Overlay & Dropdown Menu */}
+      {mobileMenuOpen && (
+        <>
+          {/* Click-outside backdrop */}
+          <div 
+            className="lg:hidden fixed inset-0 top-14 bg-black/70 backdrop-blur-sm z-30 animate-in fade-in"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+
+          {/* Mobile Navigation Drawer */}
+          <div className="lg:hidden absolute top-full left-0 right-0 bg-zinc-950/95 border-b border-zinc-800 p-3 sm:p-4 flex flex-col gap-1.5 shadow-2xl animate-in slide-in-from-top-2 z-40 backdrop-blur-xl">
+            <button
+              onClick={() => handleNav('HOME')}
+              className={`min-h-[44px] px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-3 transition-colors ${
+                currentView === 'HOME' ? 'bg-emerald-600 text-white' : 'text-zinc-300 hover:text-white hover:bg-zinc-900 active:bg-zinc-800'
+              }`}
+            >
+              <Home className="w-4 h-4" /> Beranda
+            </button>
+
+            <button
+              onClick={() => handleNav('MODULES')}
+              className={`min-h-[44px] px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-3 transition-colors ${
+                currentView === 'MODULES' || currentView === 'SIMULATION' ? 'bg-emerald-600 text-white' : 'text-zinc-300 hover:text-white hover:bg-zinc-900 active:bg-zinc-800'
+              }`}
+            >
+              <Layers className="w-4 h-4" /> Modul Bencana
+            </button>
+
+            <button
+              onClick={() => handleNav('MAP')}
+              className={`min-h-[44px] px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-3 transition-colors ${
+                currentView === 'MAP' ? 'bg-emerald-600 text-white' : 'text-zinc-300 hover:text-white hover:bg-zinc-900 active:bg-zinc-800'
+              }`}
+            >
+              <MapPin className="w-4 h-4" /> Peta Bencana
+            </button>
+
+            <button
+              onClick={() => handleNav('CHECKLIST')}
+              className={`min-h-[44px] px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-3 transition-colors ${
+                currentView === 'CHECKLIST' ? 'bg-emerald-600 text-white' : 'text-zinc-300 hover:text-white hover:bg-zinc-900 active:bg-zinc-800'
+              }`}
+            >
+              <PackageCheck className="w-4 h-4" /> Tas Siaga Bencana
+            </button>
+
+            <button
+              onClick={() => handleNav('QUIZ')}
+              className={`min-h-[44px] px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-3 transition-colors ${
+                currentView === 'QUIZ' ? 'bg-emerald-600 text-white' : 'text-zinc-300 hover:text-white hover:bg-zinc-900 active:bg-zinc-800'
+              }`}
+            >
+              <Award className="w-4 h-4" /> Kuis & Ujian
+            </button>
+          </div>
+        </>
+      )}
     </header>
   );
 };

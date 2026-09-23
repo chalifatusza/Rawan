@@ -91,7 +91,7 @@ export interface ChecklistItem {
 export interface MapMarker {
   id: string;
   title: string;
-  type: 'volcano' | 'subduction' | 'fault' | 'tsunami_zone';
+  type: 'volcano' | 'subduction' | 'fault' | 'tsunami_zone' | 'earthquake';
   location: string;
   lat: number;
   lng: number;

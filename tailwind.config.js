@@ -37,8 +37,8 @@ export default {
           '50%': { transform: 'translateY(-10px)' },
         },
         glow: {
-          'from': { boxShadow: '0 0 10px rgba(6, 182, 212, 0.3)' },
-          'to': { boxShadow: '0 0 25px rgba(6, 182, 212, 0.8)' }
+          'from': { boxShadow: '0 0 10px rgba(16, 185, 129, 0.3)' },
+          'to': { boxShadow: '0 0 25px rgba(16, 185, 129, 0.8)' }
         }
       }
     },
