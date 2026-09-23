@@ -77,7 +77,7 @@ Di dalam file `package.json`, tersedia beberapa perintah utama:
 
 Vercel adalah platform ideal untuk aplikasi berbasis Vite dan React SPA.
 
-#### Metode 1 — Melalui Dashboard Vercel (Git Integration):
+#### Metode 1 Melalui Dashboard Vercel (Git Integration):
 1. Masuk ke akun Anda di [vercel.com](https://vercel.com).
 2. Klik tombol **"Add New..."** > pilih **"Project"**.
 3. Hubungkan akun GitHub Anda dan pilih repositori `Rawan`.
@@ -88,7 +88,7 @@ Vercel adalah platform ideal untuk aplikasi berbasis Vite dan React SPA.
    - **Install Command**: `npm install`
 5. Klik **"Deploy"**. Dalam beberapa detik website akan aktif secara publik.
 
-#### Metode 2 — Melalui Vercel CLI (Terminal):
+#### Metode 2 Melalui Vercel CLI (Terminal):
 1. Buka terminal di direktori proyek dan jalankan:
    ```bash
    npx vercel
