@@ -27,16 +27,133 @@ const SceneSetup: React.FC<{ stage: EruptionStage }> = ({ stage }) => {
   return null;
 };
 
+// ─── REALISTIC GABLE ROOF GEOMETRY HELPER ───
+function createGableRoofGeometry(width: number, height: number, length: number, overhang = 0.15) {
+  const halfW = width / 2 + overhang;
+  const shape = new THREE.Shape();
+  shape.moveTo(-halfW, 0);
+  shape.lineTo(0, height);
+  shape.lineTo(halfW, 0);
+  shape.closePath();
+
+  const extrudeSettings = {
+    steps: 1,
+    depth: length + overhang * 2,
+    bevelEnabled: true,
+    bevelThickness: 0.03,
+    bevelSize: 0.03,
+    bevelSegments: 1,
+  };
+  const geo = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+  geo.translate(0, 0, -(length + overhang * 2) / 2);
+  return geo;
+}
+
+// ─── REALISTIC BPBD / PMI DISASTER RELIEF TENT ───
+const BPBDReliefTent: React.FC<{ position: [number, number, number]; rotationY?: number }> = ({ position, rotationY = 0 }) => {
+  const roofGeom = useMemo(() => createGableRoofGeometry(2.5, 0.7, 2.8, 0.12), []);
+
+  return (
+    <group position={position} rotation={[0, rotationY, 0]}>
+      {/* 4 Corner Tubular Steel Posts */}
+      {[[-1.15, -1.3], [1.15, -1.3], [-1.15, 1.3], [1.15, 1.3]].map(([tx, tz], i) => (
+        <mesh key={`vpost-${i}`} position={[tx, 0.6, tz]} castShadow>
+          <cylinderGeometry args={[0.03, 0.03, 1.2, 6]} />
+          <meshStandardMaterial color="#334155" metalness={0.8} />
+        </mesh>
+      ))}
+
+      {/* Main Orange Waterproof Canvas Wall Body */}
+      {/* Back Wall */}
+      <mesh position={[0, 0.6, -1.35]} castShadow>
+        <boxGeometry args={[2.3, 1.2, 0.04]} />
+        <meshStandardMaterial color="#ea580c" roughness={0.7} />
+      </mesh>
+      {/* Left Wall */}
+      <mesh position={[-1.2, 0.6, 0]} castShadow>
+        <boxGeometry args={[0.04, 1.2, 2.65]} />
+        <meshStandardMaterial color="#ea580c" roughness={0.7} />
+      </mesh>
+      {/* Right Wall */}
+      <mesh position={[1.2, 0.6, 0]} castShadow>
+        <boxGeometry args={[0.04, 1.2, 2.65]} />
+        <meshStandardMaterial color="#ea580c" roughness={0.7} />
+      </mesh>
+      {/* Front Entrance Opening Flaps */}
+      <mesh position={[-0.8, 0.6, 1.35]} castShadow>
+        <boxGeometry args={[0.7, 1.2, 0.04]} />
+        <meshStandardMaterial color="#ea580c" roughness={0.7} />
+      </mesh>
+      <mesh position={[0.8, 0.6, 1.35]} castShadow>
+        <boxGeometry args={[0.7, 1.2, 0.04]} />
+        <meshStandardMaterial color="#ea580c" roughness={0.7} />
+      </mesh>
+
+      {/* Pitched Canvas Roof */}
+      <mesh geometry={roofGeom} position={[0, 1.2, 0]} castShadow>
+        <meshStandardMaterial color="#f97316" roughness={0.65} />
+      </mesh>
+
+      {/* Signboard Banner */}
+      <group position={[0, 1.15, 1.38]}>
+        <mesh>
+          <boxGeometry args={[2.2, 0.26, 0.04]} />
+          <meshStandardMaterial color="#0f172a" />
+        </mesh>
+        <Html position={[0, 0, 0.03]} center distanceFactor={8}>
+          <span className="text-[10px] font-black tracking-wider text-amber-400 whitespace-nowrap px-2 py-0.5 rounded bg-slate-900/90 border border-amber-500/60 shadow">
+            POSKO UTAMA BPBD &amp; PMI
+          </span>
+        </Html>
+      </group>
+
+      {/* Interior Medical Cot / Stretcher */}
+      <group position={[-0.4, 0.1, 0]}>
+        <mesh position={[0, 0.1, 0]} castShadow>
+          <boxGeometry args={[0.65, 0.08, 1.8]} />
+          <meshStandardMaterial color="#0284c7" />
+        </mesh>
+        {[[-0.28, -0.7], [0.28, -0.7], [-0.28, 0.7], [0.28, 0.7]].map(([cx, cz], i) => (
+          <mesh key={`vcleg-${i}`} position={[cx, 0.05, cz]}>
+            <cylinderGeometry args={[0.02, 0.02, 0.2, 6]} />
+            <meshStandardMaterial color="#334155" metalness={0.8} />
+          </mesh>
+        ))}
+      </group>
+
+      {/* Emergency Radio Communications Desk */}
+      <group position={[0.55, 0.1, -0.4]}>
+        <mesh position={[0, 0.22, 0]} castShadow>
+          <boxGeometry args={[0.55, 0.05, 0.75]} />
+          <meshStandardMaterial color="#451a03" roughness={0.8} />
+        </mesh>
+        <mesh position={[0, 0.32, 0]}>
+          <boxGeometry args={[0.22, 0.14, 0.14]} />
+          <meshStandardMaterial color="#1e293b" />
+        </mesh>
+      </group>
+
+      {/* Aid Supply Emergency Boxes */}
+      <mesh position={[0.55, 0.16, 0.65]} castShadow>
+        <boxGeometry args={[0.38, 0.3, 0.38]} />
+        <meshStandardMaterial color="#f59e0b" roughness={0.6} />
+      </mesh>
+    </group>
+  );
+};
+
 interface VolcanoSceneProps {
   isSimulating?: boolean;
   eruptionStage?: EruptionStage;
   onActionClick?: (actionId: string) => void;
+  showCutaway?: boolean;
 }
 
 export const VolcanoScene: React.FC<VolcanoSceneProps> = ({
   isSimulating = true,
   eruptionStage = 0,
-  onActionClick
+  onActionClick,
+  showCutaway: externalCutaway
 }) => {
   // ─── REFS ───
   const ashPlumeRef    = useRef<THREE.InstancedMesh>(null);
@@ -72,32 +189,34 @@ export const VolcanoScene: React.FC<VolcanoSceneProps> = ({
 
   // ─── CUTAWAY / X-RAY VIEW MODE ───
   // Default: True for stages 0-2 (Visualizes magma rising inside conduit & magma chamber), False for stages 3-6 (Full Solid Eruption)
-  const [userCutawayOverride, setUserCutawayOverride] = useState<boolean | null>(null);
+  const [userCutawayOverride] = useState<boolean | null>(null);
   const autoCutaway = eruptionStage <= 2;
-  const showCutaway = userCutawayOverride !== null ? userCutawayOverride : autoCutaway;
+  const showCutaway = externalCutaway !== undefined ? externalCutaway : (userCutawayOverride !== null ? userCutawayOverride : autoCutaway);
 
   // ─── STAGE FLAGS ───
+  const isPostEruption   = eruptionStage === 6;
   const showFumarole     = eruptionStage >= 1;
-  const showRisingMagma  = eruptionStage >= 1;
-  const showAshPlume     = eruptionStage >= 2;
-  const showLavaDome     = eruptionStage >= 3;
-  const showMushroom     = eruptionStage >= 4;
-  const showPyroclastic  = eruptionStage >= 4;
-  const showSparks       = eruptionStage >= 4;
-  const showLightning    = eruptionStage >= 4;
-  const showFountain     = eruptionStage >= 4;
-  const showLavaFlowShort= eruptionStage >= 4;
-  const showLavaFlowLong = eruptionStage >= 5;
-  const showFallingAsh   = eruptionStage >= 6;
+  const showRisingMagma  = eruptionStage >= 1 && eruptionStage <= 5;
+  const showAshPlume     = eruptionStage >= 2 && eruptionStage <= 5;
+  const showLavaDome     = eruptionStage >= 3 && eruptionStage <= 5;
+  const showMushroom     = eruptionStage >= 4 && eruptionStage <= 5;
+  const showPyroclastic  = eruptionStage >= 4 && eruptionStage <= 5;
+  const showSparks       = eruptionStage >= 4 && eruptionStage <= 5;
+  const showLightning    = eruptionStage >= 4 && eruptionStage <= 5;
+  const showFountain     = eruptionStage >= 4 && eruptionStage <= 5;
+  const showLavaFlowShort= eruptionStage >= 4 && eruptionStage <= 5;
+  const showLavaFlowLong = eruptionStage === 5;
+  const showCooledLava   = eruptionStage === 6;
+  const showFallingAsh   = eruptionStage === 6;
   const showEvacuation   = eruptionStage >= 3;
-  const postDampen       = eruptionStage === 6 ? 0.45 : 1.0;
+  const postDampen       = 1.0;
 
   // ─── INTENSITY TABLES ───
-  const lavaEmissive       = [0.6, 1.5, 2.5, 4.0, 7.0, 5.5, 2.0][eruptionStage] ?? 0.6;
-  const craterLightInt     = [1.5, 3.0, 5.0, 8.0, 14.0, 10.0, 4.0][eruptionStage] ?? 1.5;
-  const magmaGlow          = [0.4, 2.0, 3.5, 5.5, 8.0, 6.0, 1.5][eruptionStage] ?? 0.4;
-  const conduitFill        = [0.0, 0.35, 0.65, 0.88, 1.0, 0.95, 0.4][eruptionStage] ?? 0.0;
-  const plumeIntensity     = [0, 0, 0.4, 0.7, 1.0, 0.85, 0.5][eruptionStage] ?? 0;
+  const lavaEmissive       = [0.6, 1.5, 2.5, 4.0, 7.0, 5.5, 0.3][eruptionStage] ?? 0.6;
+  const craterLightInt     = [1.5, 3.0, 5.0, 8.0, 14.0, 10.0, 0.8][eruptionStage] ?? 1.5;
+  const magmaGlow          = [0.4, 2.0, 3.5, 5.5, 8.0, 6.0, 0.3][eruptionStage] ?? 0.4;
+  const conduitFill        = [0.0, 0.35, 0.65, 0.88, 1.0, 0.95, 0.15][eruptionStage] ?? 0.0;
+  const plumeIntensity     = [0, 0, 0.4, 0.7, 1.0, 0.85, 0.0][eruptionStage] ?? 0;
 
   // ─── MOUNTAIN GEOMETRY ─── realistic stratovolcano, dark rock tones, full 360 solid
   const mountainGeometry = useMemo(() => {
@@ -633,18 +752,18 @@ export const VolcanoScene: React.FC<VolcanoSceneProps> = ({
       {showCutaway && (
         <group>
           <Html position={[2.8, -4.3, 0.2]} center distanceFactor={9}>
-            <div className="px-2.5 py-1 rounded-xl bg-red-950/95 text-orange-200 font-black text-[10px] tracking-wider border-2 border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.9)] whitespace-nowrap pointer-events-none animate-pulse">
+            <div className="px-2.5 py-1 rounded-xl bg-red-950 text-white font-black text-[10px] tracking-wider border border-red-600 shadow-md whitespace-nowrap pointer-events-none">
               🔥 DAPUR MAGMA (Magma Chamber)
             </div>
           </Html>
           <Html position={[1.8, -1.8, 0.2]} center distanceFactor={9}>
-            <div className="px-2 py-0.5 rounded-lg bg-slate-900/95 text-orange-300 font-bold text-[9px] tracking-wider border border-orange-500/70 shadow-[0_0_12px_rgba(249,115,22,0.6)] whitespace-nowrap pointer-events-none">
+            <div className="px-2 py-0.5 rounded-lg bg-zinc-900 text-amber-200 font-bold text-[9px] tracking-wider border border-zinc-700 shadow-md whitespace-nowrap pointer-events-none">
               🌋 PIPA KONDUIT (Magma Conduit)
             </div>
           </Html>
           {eruptionStage >= 1 && (
             <Html position={[0, 0.1, 0.2]} center distanceFactor={9}>
-              <div className="px-2.5 py-1 rounded-full bg-gradient-to-r from-orange-600 to-red-600 text-white font-black text-[10px] tracking-wider border-2 border-white shadow-[0_0_25px_rgba(239,68,68,0.95)] whitespace-nowrap pointer-events-none animate-bounce">
+              <div className="px-2.5 py-1 rounded-full bg-red-600 text-white font-black text-[10px] tracking-wider border-2 border-white shadow-md whitespace-nowrap pointer-events-none">
                 ↑ MAGMA NAIK KE PERMUKAAN ↑
               </div>
             </Html>
@@ -652,45 +771,25 @@ export const VolcanoScene: React.FC<VolcanoSceneProps> = ({
         </group>
       )}
 
-      {/* 3D UI Toggle Button for View Mode */}
-      <Html position={[0, 4.8, 0]} center distanceFactor={11}>
-        <button
-          onClick={() => {
-            soundEngine.playClick();
-            setUserCutawayOverride(!showCutaway);
-          }}
-          className={`flex items-center gap-2 px-4 py-2 rounded-full font-black text-xs shadow-2xl backdrop-blur-xl border-2 transition-all cursor-pointer pointer-events-auto hover:scale-105 ${
-            showCutaway
-              ? 'bg-gradient-to-r from-red-600 to-orange-600 text-white border-white shadow-[0_0_25px_rgba(239,68,68,0.8)]'
-              : 'bg-slate-900/95 text-orange-300 border-orange-500/80 shadow-[0_0_18px_rgba(249,115,22,0.5)] hover:text-white'
-          }`}
-        >
-          <span>{showCutaway ? '🔬 Mode Penampang Dalam (Magma Naik)' : '🌋 Mode Full Gunung 3D'}</span>
-          <span className="text-[9px] bg-black/50 text-orange-200 px-2 py-0.5 rounded-full uppercase tracking-wider font-semibold">
-            {showCutaway ? 'Ubah ke Full Gunung' : 'Lihat Magma Dalam'}
-          </span>
-        </button>
-      </Html>
-
       {/* ══ CALDERA LAVA LAKE ══ */}
       <group position={[0, -0.68, 0]}>
         <mesh ref={lavaLakeRef}>
           <cylinderGeometry args={[0.95, 0.95, 0.12, 28]} />
           <meshStandardMaterial
-            color={eruptionStage >= 3 ? '#ea580c' : eruptionStage >= 1 ? '#b45309' : '#78350f'}
-            emissive={eruptionStage >= 3 ? '#ef4444' : eruptionStage >= 1 ? '#dc2626' : '#92400e'}
-            emissiveIntensity={lavaEmissive} roughness={0.15} metalness={0.08}
+            color={eruptionStage >= 6 ? '#1c1917' : eruptionStage >= 3 ? '#ea580c' : eruptionStage >= 1 ? '#b45309' : '#78350f'}
+            emissive={eruptionStage >= 6 ? '#0c0a09' : eruptionStage >= 3 ? '#ef4444' : eruptionStage >= 1 ? '#dc2626' : '#92400e'}
+            emissiveIntensity={lavaEmissive} roughness={0.7} metalness={0.15}
           />
         </mesh>
         {[-0.35, 0.3, 0.0].map((cx, i) => (
           <mesh key={`crust-${i}`} position={[cx, 0.07, (i - 1) * 0.28]} rotation={[0, i * 1.3, 0]}>
             <boxGeometry args={[0.35, 0.045, 0.28]} />
-            <meshStandardMaterial color="#18181b" roughness={0.92} />
+            <meshStandardMaterial color="#18181b" roughness={0.95} />
           </mesh>
         ))}
       </group>
 
-      {/* LAVA DOME stage 3+ */}
+      {/* LAVA DOME stage 3-5 */}
       {showLavaDome && (
         <mesh ref={lavaDomeRef} position={[0, -0.32, 0]}>
           <sphereGeometry args={[0.6, 18, 14, 0, Math.PI * 2, 0, Math.PI / 2]} />
@@ -698,24 +797,22 @@ export const VolcanoScene: React.FC<VolcanoSceneProps> = ({
         </mesh>
       )}
 
-      {/* LAVA FOUNTAIN (visible vertical jets from crater) */}
+      {/* LAVA FOUNTAIN (visible vertical jets from crater in stages 4-5) */}
       <instancedMesh ref={lavaFountainRef} args={[undefined, undefined, fountainCount]} renderOrder={5} frustumCulled={false}>
         <sphereGeometry args={[0.55, 10, 10]} />
         <meshStandardMaterial color="#ff4500" emissive="#ff2200" emissiveIntensity={8.0} roughness={0.08} transparent opacity={0.95} />
       </instancedMesh>
 
-      {/* ══ LAVA FLOW — PointLights illuminate slope with lava glow ══ */}
+      {/* ══ LAVA FLOW (Active Glowing in Stages 4-5) ══ */}
       {showLavaFlowShort && (
         <group ref={lavaFlowGroupRef}>
-          {/* ── PointLights along lava channel — these paint the mountain red/orange ── */}
+          {/* PointLights along lava channel */}
           <pointLight position={[0.3,  1.5,  0.6]}  color="#ff4500" intensity={20} distance={3.5} />
           <pointLight position={[0.7,  0.6,  1.6]}  color="#ff3800" intensity={22} distance={4.0} />
           <pointLight position={[1.0, -0.3,  2.8]}  color="#ff3000" intensity={22} distance={4.0} />
           <pointLight position={[1.2, -0.9,  4.0]}  color="#ff2800" intensity={20} distance={3.8} />
           <pointLight position={[1.5, -1.4,  5.3]}  color="#ff2000" intensity={18} distance={3.5} />
-          {/* ── Small glowing lava blobs — small enough to sit ON the ridge without hiding in terrain ── */}
           {[
-            /* x     y_surface_+offset   z     r */
             [ 0.28,  0.85,   0.65,  0.18 ],
             [ 0.60,  0.25,   1.60,  0.20 ],
             [ 0.88, -0.30,   2.60,  0.20 ],
@@ -736,22 +833,16 @@ export const VolcanoScene: React.FC<VolcanoSceneProps> = ({
         </group>
       )}
 
-
-
-
-      {/* Long flow — stage 5+: extends to lowland flat ground */}
+      {/* Long flow — stage 5: extends to lowland flat ground */}
       {showLavaFlowLong && (
         <group>
-          {/* ── PointLights along extended channel ── */}
           <pointLight position={[2.0, -0.8, 7.0]}   color="#ff4500" intensity={14} distance={4.0} />
           <pointLight position={[3.5, -1.2, 9.5]}   color="#ff3500" intensity={16} distance={4.5} />
           <pointLight position={[5.0, -1.4, 12.0]}  color="#ff3000" intensity={18} distance={5.0} />
           <pointLight position={[7.0, -1.5,  8.0]}  color="#ff4000" intensity={14} distance={4.0} />
           <pointLight position={[-2.0,-1.5, 10.0]}  color="#ff4000" intensity={14} distance={4.0} />
-          {/* ── Extended main channel sphere chain ── */}
 
           {[
-            /* x      y        z      r */
             [ 2.10,  -1.92,   6.70,  0.34 ],
             [ 2.45,  -1.98,   7.50,  0.36 ],
             [ 2.80,  -2.03,   8.40,  0.38 ],
@@ -765,7 +856,6 @@ export const VolcanoScene: React.FC<VolcanoSceneProps> = ({
               <meshStandardMaterial color="#b83208" emissive="#ff4500" emissiveIntensity={3.5} roughness={0.22} />
             </mesh>
           ))}
-          {/* ── East branch ── */}
           {[
             [ 3.10,  -1.88,  5.80,  0.30 ],
             [ 4.20,  -2.00,  6.50,  0.32 ],
@@ -777,7 +867,6 @@ export const VolcanoScene: React.FC<VolcanoSceneProps> = ({
               <meshStandardMaterial color="#b83208" emissive="#ff6500" emissiveIntensity={3.0} roughness={0.22} />
             </mesh>
           ))}
-          {/* ── West branch ── */}
           {[
             [ -0.80, -1.88,  7.50,  0.30 ],
             [ -1.50, -2.00,  9.00,  0.32 ],
@@ -789,7 +878,6 @@ export const VolcanoScene: React.FC<VolcanoSceneProps> = ({
               <meshStandardMaterial color="#b83208" emissive="#ff6500" emissiveIntensity={3.0} roughness={0.22} />
             </mesh>
           ))}
-          {/* ── Lava pools/lakes at lowland ── */}
           {[
             [  5.0, -2.13, 12.0, 1.4, 5.0 ],
             [  7.5, -2.13,  8.0, 1.0, 4.5 ],
@@ -801,7 +889,6 @@ export const VolcanoScene: React.FC<VolcanoSceneProps> = ({
               <meshStandardMaterial color="#dc2626" emissive="#ff4500" emissiveIntensity={g} roughness={0.08} transparent opacity={0.96} />
             </mesh>
           ))}
-          {/* ── Glowing ground cracks ── */}
           {[
             [ 4.0, 7.0, 0.10, 2.5, -0.25 ],
             [ 6.0, 9.0, 0.08, 2.0,  0.15 ],
@@ -813,7 +900,49 @@ export const VolcanoScene: React.FC<VolcanoSceneProps> = ({
             </mesh>
           ))}
           <Html position={[5.5, -1.4, 12.0]} center distanceFactor={10}>
-            <div className="px-2 py-0.5 rounded bg-red-700/90 text-orange-100 font-black text-[9px] tracking-wider border border-red-500 shadow-[0_0_18px_rgba(239,68,68,0.8)] whitespace-nowrap pointer-events-none animate-pulse">🌋 LAVA MENCAPAI DATARAN RENDAH</div>
+            <div className="px-2 py-0.5 rounded bg-red-700 text-white font-black text-[9px] tracking-wider border border-red-600 shadow-md whitespace-nowrap pointer-events-none">🌋 LAVA MENCAPAI DATARAN RENDAH</div>
+          </Html>
+        </group>
+      )}
+
+      {/* ══ SOLIDIFIED COOLED LAVA FIELD (Stage 6 Post-Eruption Hardened Basalt) ══ */}
+      {showCooledLava && (
+        <group>
+          {/* Cooled basalt slope trail */}
+          {[
+            [ 0.28,  0.85,   0.65,  0.22 ],
+            [ 0.60,  0.25,   1.60,  0.24 ],
+            [ 0.88, -0.30,   2.60,  0.25 ],
+            [ 1.08, -0.75,   3.60,  0.26 ],
+            [ 1.25, -1.15,   4.60,  0.28 ],
+            [ 1.42, -1.48,   5.60,  0.30 ],
+            [ 2.10, -1.92,   6.70,  0.36 ],
+            [ 2.80, -2.03,   8.40,  0.40 ],
+            [ 3.70, -2.09,  10.30,  0.44 ],
+            [ 5.00, -2.12,  12.20,  0.48 ],
+          ].map(([x, y, z, r], i) => (
+            <mesh key={`clava-${i}`} position={[x, y + r * 0.4, z]}>
+              <sphereGeometry args={[r, 8, 6]} />
+              <meshStandardMaterial color="#18181b" roughness={0.96} metalness={0.2} />
+            </mesh>
+          ))}
+
+          {/* Hardened basalt crusted pools */}
+          {[
+            [  5.0, -2.13, 12.0, 1.4 ],
+            [  7.5, -2.13,  8.0, 1.0 ],
+            [ -2.5, -2.13, 12.5, 1.2 ],
+          ].map(([x, y, z, r], i) => (
+            <mesh key={`clake-${i}`} position={[x, y, z]} rotation={[-Math.PI / 2, 0, 0]}>
+              <circleGeometry args={[r, 16]} />
+              <meshStandardMaterial color="#1c1917" roughness={0.95} />
+            </mesh>
+          ))}
+
+          <Html position={[4.0, -1.5, 9.0]} center distanceFactor={10}>
+            <div className="px-2.5 py-1 rounded bg-slate-900/90 text-slate-300 font-bold text-[9px] tracking-wider border border-slate-600 shadow-lg whitespace-nowrap pointer-events-none">
+              🪨 Endapan Lava Membeku &amp; Jalur Lahar Dingin
+            </div>
           </Html>
         </group>
       )}
@@ -821,20 +950,20 @@ export const VolcanoScene: React.FC<VolcanoSceneProps> = ({
 
 
 
-      {/* ══ TREES — scattered on front slope (z > 0) ══ */}
+      {/* ══ TREES — scattered on front slope (z > 0), clearing the BPBD camp zone ══ */}
       {[
-        { x: -5.0, z: 2.5,  s: 1.1 },
-        { x: -6.0, z: 1.0,  s: 1.2 },
-        { x: -4.5, z: 4.0,  s: 0.9 },
+        { x: -5.0, z: 1.8,  s: 1.1 },
+        { x: -8.5, z: 1.2,  s: 1.05 },
+        { x: -10.8, z: 1.8, s: 1.15 },
+        { x: -4.0, z: 1.8,  s: 1.1 },
+        { x: -3.8, z: 3.5,  s: 0.9 },
         { x: -3.2, z: 6.0,  s: 1.05 },
-        { x: -7.0, z: 5.5,  s: 1.15 },
         { x: -2.5, z: 7.5,  s: 0.95 },
-        { x: -7.5, z: 2.8,  s: 1.1  },
-        { x: -9.0, z: 4.5,  s: 1.0  },
+        { x: -7.5, z: 9.5,  s: 1.0 },
         { x:  5.0, z: 7.5,  s: 1.05 },
         { x:  7.0, z: 6.0,  s: 1.1  },
         { x:  8.5, z: 4.0,  s: 0.95 },
-        { x: -5.5, z: 9.0,  s: 1.0  },
+        { x:  6.0, z: 2.5,  s: 1.0  },
       ].map((pt, i) => {
         const burned = eruptionStage >= 5 && (pt.x > 0 || pt.z > 6);
         const ashColor = eruptionStage >= 6 ? '#44403c' : '#166534';
@@ -968,7 +1097,7 @@ export const VolcanoScene: React.FC<VolcanoSceneProps> = ({
       {eruptionStage >= 3 && (
         <group position={[4.0, -1.88, 4.2]} rotation={[0, -0.6, 0]}>
           <Html center distanceFactor={10}>
-            <div className="px-2 py-0.5 rounded bg-red-600/90 text-white font-black text-[10px] tracking-wider border border-red-400 shadow-[0_0_14px_rgba(239,68,68,0.9)] whitespace-nowrap pointer-events-none">
+            <div className="px-2 py-0.5 rounded bg-red-600 text-white font-black text-[10px] tracking-wider border border-red-500 shadow-md whitespace-nowrap pointer-events-none">
               KRB III — ZONA BAHAYA ALIRAN LAHAR &amp; AWAN PANAS
             </div>
           </Html>
@@ -985,30 +1114,18 @@ export const VolcanoScene: React.FC<VolcanoSceneProps> = ({
       </mesh>
 
       {/* ══ EMERGENCY CAMP (BPBD Posko) — front/camera side ══ */}
-      <group position={[-7.5, -2.05, 5.5]}>
-        {/* Concrete pad */}
-        <mesh position={[0, 0.06, 0]}>
-          <boxGeometry args={[5.0, 0.12, 4.0]} />
+      <group position={[-7.5, -1.52, 5.5]}>
+        {/* Solid Leveled Concrete Foundation Slab embedded into mountain slope */}
+        <mesh position={[0, -0.22, 0]}>
+          <boxGeometry args={[6.8, 0.55, 4.6]} />
           <meshStandardMaterial color="#334155" roughness={0.72} />
         </mesh>
 
-        {/* Main command tent */}
-        <group position={[-0.9, 0.12, 0]}>
-          <mesh position={[0, 0.55, 0]}>
-            <boxGeometry args={[2.4, 1.0, 2.0]} />
-            <meshStandardMaterial color="#ea580c" roughness={0.72} />
-          </mesh>
-          <mesh position={[0, 1.35, 0]} rotation={[0, 0, Math.PI / 2]}>
-            <cylinderGeometry args={[0.025, 1.38, 2.42, 3]} />
-            <meshStandardMaterial color="#f97316" roughness={0.68} />
-          </mesh>
-          <Html position={[0, 1.2, 1.02]} center distanceFactor={7}>
-            <span className="text-[9px] font-black tracking-tighter text-orange-600 whitespace-nowrap bg-white px-1.5 py-0.5 rounded shadow">POSKO UTAMA BPBD</span>
-          </Html>
-        </group>
+        {/* Main BPBD Command & Relief Tent */}
+        <BPBDReliefTent position={[-1.3, 0.06, 0]} rotationY={0} />
 
-        {/* Ambulance */}
-        <group position={[1.3, 0.12, 0.2]} rotation={[0, -0.35, 0]}>
+        {/* Emergency Medical Ambulance in Dedicated Parking Bay */}
+        <group position={[1.8, 0.06, 0.2]} rotation={[0, -0.15, 0]}>
           <mesh position={[0, 0.38, 0]}><boxGeometry args={[1.9, 0.55, 0.95]} /><meshStandardMaterial color="#f8fafc" roughness={0.38} /></mesh>
           <mesh position={[-0.1, 0.78, 0]}><boxGeometry args={[1.3, 0.48, 0.92]} /><meshStandardMaterial color="#e2e8f0" roughness={0.28} /></mesh>
           <mesh position={[0, 0.38, 0.49]}><boxGeometry args={[1.8, 0.14, 0.02]} /><meshStandardMaterial color="#dc2626" /></mesh>
@@ -1021,14 +1138,14 @@ export const VolcanoScene: React.FC<VolcanoSceneProps> = ({
           ))}
         </group>
 
-        {/* Radio tower */}
-        <group position={[2.0, 0.12, -1.4]}>
+        {/* Radio Communication Tower (Rear-Left corner behind tent, isolated from ambulance) */}
+        <group position={[-2.6, 0.06, -1.4]}>
           <mesh position={[0, 1.7, 0]}><cylinderGeometry args={[0.035, 0.07, 3.4]} /><meshStandardMaterial color="#94a3b8" metalness={0.82} /></mesh>
           <mesh position={[0, 3.45, 0]}><sphereGeometry args={[0.09, 8, 8]} /><meshStandardMaterial color="#ef4444" emissive="#ef4444" emissiveIntensity={3.5} /></mesh>
         </group>
 
-        {/* Flag pole */}
-        <group position={[-2.1, 0.12, 1.4]}>
+        {/* Indonesian National Flag pole (Front-Left corner) */}
+        <group position={[-2.7, 0.06, 1.4]}>
           <mesh position={[0, 1.25, 0]}><cylinderGeometry args={[0.032, 0.032, 2.5]} /><meshStandardMaterial color="#cbd5e1" metalness={0.72} /></mesh>
           <mesh ref={flagRef} position={[0.35, 2.18, 0]}><boxGeometry args={[0.68, 0.42, 0.022]} /><meshStandardMaterial color="#dc2626" /></mesh>
           <mesh position={[0.35, 1.97, 0]}><boxGeometry args={[0.68, 0.22, 0.024]} /><meshStandardMaterial color="#ffffff" /></mesh>
@@ -1038,9 +1155,9 @@ export const VolcanoScene: React.FC<VolcanoSceneProps> = ({
           <Html position={[0, 2.6, 0]} center distanceFactor={8}>
             <button
               onClick={() => { soundEngine.playClick(); if (onActionClick) onActionClick('EVACUATE_KRB'); }}
-              className="flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 text-white font-black text-xs shadow-[0_0_28px_rgba(249,115,22,0.95)] cursor-pointer hover:scale-105 transition-all whitespace-nowrap border-2 border-white pointer-events-auto"
+              className="flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-red-600 hover:bg-red-500 text-white font-black text-xs shadow-md cursor-pointer hover:scale-105 transition-all whitespace-nowrap border-2 border-white pointer-events-auto"
             >
-              <span className="w-2.5 h-2.5 rounded-full bg-white animate-ping" />
+              <span className="w-2.5 h-2.5 rounded-full bg-white" />
               <span>EVAKUASI KE POSKO AMAN (&gt;10 KM)</span>
             </button>
           </Html>

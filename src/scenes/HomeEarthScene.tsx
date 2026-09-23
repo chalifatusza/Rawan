@@ -1,162 +1,105 @@
 import React, { useRef, useMemo } from 'react';
-import { useFrame } from '@react-three/fiber';
+import { useFrame, useLoader } from '@react-three/fiber';
 import { Float, Sparkles } from '@react-three/drei';
 import * as THREE from 'three';
 
-interface HomeEarthSceneProps {
-  onSelectDisaster?: (id: string) => void;
-}
+export const HomeEarthScene: React.FC = () => {
+  const earthGroupRef = useRef<THREE.Group>(null);
+  const earthMeshRef = useRef<THREE.Mesh>(null);
+  const cloudsRef = useRef<THREE.Mesh>(null);
 
-export const HomeEarthScene: React.FC<HomeEarthSceneProps> = () => {
-  const earthRef = useRef<THREE.Group>(null);
-  const atmosphereRef = useRef<THREE.Mesh>(null);
-  const ringGroupRef = useRef<THREE.Group>(null);
+  // Load realistic NASA Earth textures
+  const [dayMap, cloudsMap, specularMap, normalMap] = useLoader(THREE.TextureLoader, [
+    '/textures/earth_day.jpg',
+    '/textures/earth_clouds.png',
+    '/textures/earth_specular.jpg',
+    '/textures/earth_normal.jpg'
+  ]);
 
-  // Indonesian Archipelago procedurally placed islands (Sumatra, Java, Kalimantan, Sulawesi, Papua, Bali-Nusa Tenggara)
-  const islands = useMemo(() => [
-    { name: 'Sumatra', pos: [-1.4, 0.3, 2.2] as [number, number, number], rot: [0.3, -0.6, 0.4] as [number, number, number], scale: [0.9, 0.1, 0.35] as [number, number, number] },
-    { name: 'Jawa', pos: [-0.6, -0.2, 2.4] as [number, number, number], rot: [0.1, 0.1, -0.1] as [number, number, number], scale: [0.8, 0.08, 0.25] as [number, number, number] },
-    { name: 'Kalimantan', pos: [-0.7, 0.5, 2.3] as [number, number, number], rot: [0.2, 0.3, 0] as [number, number, number], scale: [0.7, 0.12, 0.6] as [number, number, number] },
-    { name: 'Sulawesi', pos: [0.1, 0.3, 2.4] as [number, number, number], rot: [0.1, 0.8, 0.2] as [number, number, number], scale: [0.5, 0.1, 0.5] as [number, number, number] },
-    { name: 'Bali-Nusa Tenggara', pos: [0.2, -0.3, 2.4] as [number, number, number], rot: [0.1, 0.2, 0] as [number, number, number], scale: [0.6, 0.06, 0.18] as [number, number, number] },
-    { name: 'Maluku', pos: [0.7, 0.2, 2.3] as [number, number, number], rot: [0, 0.5, 0] as [number, number, number], scale: [0.4, 0.08, 0.3] as [number, number, number] },
-    { name: 'Papua', pos: [1.3, -0.1, 2.1] as [number, number, number], rot: [-0.1, -0.4, -0.2] as [number, number, number], scale: [1.0, 0.1, 0.55] as [number, number, number] },
-  ], []);
+  // Texture configuration for crisp photorealism
+  useMemo(() => {
+    dayMap.colorSpace = THREE.SRGBColorSpace;
+    dayMap.anisotropy = 16;
+    cloudsMap.colorSpace = THREE.SRGBColorSpace;
+    cloudsMap.anisotropy = 16;
+  }, [dayMap, cloudsMap]);
 
-  // Ring of Fire hotspots
-  const ringHotspots = useMemo(() => [
-    { pos: [-1.6, 0.2, 2.15] as [number, number, number], color: '#ef4444', label: 'Megathrust Sumatra' },
-    { pos: [-0.5, -0.3, 2.35] as [number, number, number], color: '#f59e0b', label: 'Sunda Arc / Merapi' },
-    { pos: [0.1, 0.4, 2.35] as [number, number, number], color: '#ef4444', label: 'Sesar Palu-Koro' },
-    { pos: [1.2, 0.0, 2.15] as [number, number, number], color: '#06b6d4', label: 'Palung New Guinea' }
-  ], []);
-
-  useFrame((state) => {
-    const t = state.clock.elapsedTime;
-    if (earthRef.current) {
-      earthRef.current.rotation.y = t * 0.05;
+  // Frame animation: smooth rotation and subtle cloud drift
+  useFrame((_, delta) => {
+    if (earthMeshRef.current) {
+      earthMeshRef.current.rotation.y += delta * 0.06;
     }
-    if (atmosphereRef.current) {
-      atmosphereRef.current.rotation.y = -t * 0.02;
-    }
-    if (ringGroupRef.current) {
-      ringGroupRef.current.rotation.z = Math.sin(t * 0.5) * 0.05;
+    if (cloudsRef.current) {
+      cloudsRef.current.rotation.y += delta * 0.075;
     }
   });
 
   return (
-    <group>
-      <ambientLight intensity={0.6} />
-      <directionalLight position={[10, 8, 10]} intensity={1.8} color="#e0f2fe" />
-      <pointLight position={[-10, -5, -5]} intensity={0.4} color="#38bdf8" />
-      <pointLight position={[0, 5, 5]} intensity={1.2} color="#06b6d4" distance={15} />
+    <group position={[0, 0.2, 0]}>
+      {/* Crisp, Beautiful Studio & Solar Lighting */}
+      {/* Key Sun Light: Illuminates front & continents brightly */}
+      <directionalLight position={[5, 4, 10]} intensity={2.6} color="#ffffff" />
+      
+      {/* Soft Fill Light: Ensures the globe is vibrant, never pitch black */}
+      <directionalLight position={[-6, 2, 7]} intensity={1.3} color="#e0f2fe" />
+      
+      {/* Subtle Rim/Back Light: Gives a delicate atmospheric space edge */}
+      <directionalLight position={[0, -5, -8]} intensity={0.5} color="#34d399" />
+      
+      {/* Ambient Space Light: Keeps colors vivid and details clear */}
+      <ambientLight intensity={0.85} color="#f8fafc" />
 
-      <Float speed={1.8} rotationIntensity={0.3} floatIntensity={0.4}>
-        <group ref={earthRef}>
-          {/* Base Globe (Deep Ocean Navy/Cyan) */}
-          <mesh>
+      <Float speed={1.2} rotationIntensity={0.1} floatIntensity={0.25}>
+        {/* Axial tilt of Earth: 23.4 degrees */}
+        <group ref={earthGroupRef} rotation={[0, 0, 0.41]}>
+          
+          {/* Main Photorealistic Earth Sphere */}
+          <mesh ref={earthMeshRef} rotation={[0, 4.6, 0]}>
             <sphereGeometry args={[2.5, 64, 64]} />
             <meshStandardMaterial
-              color="#021f3d"
-              roughness={0.6}
-              metalness={0.3}
-              emissive="#03274f"
-              emissiveIntensity={0.6}
+              map={dayMap}
+              normalMap={normalMap}
+              normalScale={new THREE.Vector2(0.6, 0.6)}
+              roughnessMap={specularMap}
+              roughness={0.45}
+              metalness={0.05}
             />
           </mesh>
 
-          {/* Glowing Continent Latitudes & Meridian Rings */}
-          <mesh>
-            <sphereGeometry args={[2.51, 24, 24]} />
+          {/* Natural Atmospheric Cloud Layer */}
+          <mesh ref={cloudsRef} rotation={[0, 4.6, 0]} scale={1.008}>
+            <sphereGeometry args={[2.5, 64, 64]} />
+            <meshStandardMaterial
+              map={cloudsMap}
+              transparent
+              opacity={0.42}
+              blending={THREE.AdditiveBlending}
+              depthWrite={false}
+            />
+          </mesh>
+
+          {/* Ultra-soft Single Layer Atmospheric Horizon Glow */}
+          <mesh scale={1.02}>
+            <sphereGeometry args={[2.5, 48, 48]} />
             <meshBasicMaterial
-              color="#0ea5e9"
-              wireframe
+              color="#34d399"
               transparent
               opacity={0.12}
-            />
-          </mesh>
-
-          {/* Indonesian Archipelago Floating Landmasses */}
-          <group position={[0, 0, 0]}>
-            {islands.map((island, idx) => (
-              <group key={idx} position={island.pos} rotation={island.rot} scale={island.scale}>
-                <mesh castShadow receiveShadow>
-                  <boxGeometry args={[1, 1, 1]} />
-                  <meshStandardMaterial
-                    color="#10b981"
-                    roughness={0.7}
-                    emissive="#059669"
-                    emissiveIntensity={0.4}
-                  />
-                </mesh>
-                <mesh position={[0, 0.4, 0]} scale={[0.8, 0.8, 0.8]}>
-                  <coneGeometry args={[0.3, 0.6, 4]} />
-                  <meshStandardMaterial color="#047857" emissive="#065f46" emissiveIntensity={0.5} />
-                </mesh>
-              </group>
-            ))}
-
-            {/* Active Ring of Fire Hotspots Pulsing */}
-            {ringHotspots.map((spot, i) => (
-              <group key={`spot-${i}`} position={spot.pos}>
-                <mesh>
-                  <sphereGeometry args={[0.07, 16, 16]} />
-                  <meshStandardMaterial
-                    color={spot.color}
-                    emissive={spot.color}
-                    emissiveIntensity={2.5}
-                  />
-                </mesh>
-                <mesh scale={[1.8, 1.8, 1.8]}>
-                  <ringGeometry args={[0.08, 0.12, 16]} />
-                  <meshBasicMaterial color={spot.color} transparent opacity={0.6} side={THREE.DoubleSide} />
-                </mesh>
-              </group>
-            ))}
-          </group>
-
-          {/* Atmosphere Inner Glow */}
-          <mesh ref={atmosphereRef} scale={1.08}>
-            <sphereGeometry args={[2.5, 48, 48]} />
-            <meshStandardMaterial
-              color="#38bdf8"
-              transparent
-              opacity={0.18}
               side={THREE.BackSide}
               blending={THREE.AdditiveBlending}
             />
           </mesh>
         </group>
-
-        {/* Outer Orbital Hologram Ring */}
-        <group ref={ringGroupRef} rotation={[Math.PI / 4, 0, 0]}>
-          <mesh>
-            <torusGeometry args={[3.8, 0.015, 16, 100]} />
-            <meshBasicMaterial color="#06b6d4" transparent opacity={0.4} />
-          </mesh>
-          <mesh rotation={[0, 0, Math.PI / 3]}>
-            <torusGeometry args={[4.2, 0.01, 16, 100]} />
-            <meshBasicMaterial color="#3b82f6" transparent opacity={0.25} />
-          </mesh>
-        </group>
       </Float>
 
-      {/* Cyber/Cosmic Sparkles */}
+      {/* Gentle Star Sparkles in Background */}
       <Sparkles
-        count={250}
-        scale={12}
-        size={3}
-        speed={0.4}
-        opacity={0.35}
-        color="#38bdf8"
-      />
-      <Sparkles
-        count={80}
-        scale={10}
-        size={4}
-        speed={0.8}
-        opacity={0.5}
-        color="#ef4444"
+        count={160}
+        scale={14}
+        size={2}
+        speed={0.3}
+        opacity={0.4}
+        color="#a7f3d0"
       />
     </group>
   );

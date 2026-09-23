@@ -293,6 +293,36 @@ class SoundEngine {
     this.playTornadoWind(4.5);
   }
 
+  // Flood / Water Splash Sound
+  public playWaterSplash() {
+    if (this.isMuted) return;
+    try {
+      this.initCtx();
+      if (!this.ctx || !this.masterGain) return;
+      const bufferSize = this.ctx.sampleRate * 0.8;
+      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (this.ctx.sampleRate * 0.2));
+      }
+      const noise = this.ctx.createBufferSource();
+      noise.buffer = buffer;
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(800, this.ctx.currentTime);
+      filter.frequency.exponentialRampToValueAtTime(150, this.ctx.currentTime + 0.7);
+
+      const gain = this.ctx.createGain();
+      gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.7);
+
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.masterGain);
+      noise.start();
+    } catch {}
+  }
+
   // Text-To-Speech Narration in Indonesian
   public speakIndonesian(text: string) {
     if (!('speechSynthesis' in window)) return;
